@@ -1,15 +1,19 @@
 {
+  "$schema": "https://json.schemastore.org/expo-52.0.0",
   "expo": {
-    "name": "chat",
-    "slug": "chat",
+    "name": "Lotta Chat",
+    "slug": "lotta-chat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "chat",
+    "scheme": "lotta-chat",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +37,14 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      [
+        "expo-asset",
+        {
+          "assets": ["./assets/images/logo.png"]
+        }
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
