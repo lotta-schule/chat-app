@@ -1,19 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiGqlUrl } from '@/config';
 import { ApolloClient, InMemoryCache } from '@apollo/client';
-import { use, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Session } from '../auth';
 import type { TenantLight } from '../tenant';
 import { persistCache, AsyncStorageWrapper } from 'apollo3-cache-persist';
-import { PromiseOrValue } from 'graphql/jsutils/PromiseOrValue';
 
-type CreateApolloClientOptions = {
-  cache?: PromiseOrValue<InMemoryCache>;
-};
-
-export const createApolloClient = async (
+export const createApolloClient = (
   sessionOrTenant: Session | TenantLight,
-  options: CreateApolloClientOptions = {}
+  options: {
+    cache?: InMemoryCache | null;
+  } = {}
 ) => {
   const session = 'tenant' in sessionOrTenant ? sessionOrTenant : null;
   const tenant =
@@ -22,7 +19,7 @@ export const createApolloClient = async (
   // TODO: Better HTTPLink with token handling etc
   return new ApolloClient({
     uri: apiGqlUrl,
-    cache: await (options.cache || new InMemoryCache()),
+    cache: options.cache || new InMemoryCache(),
     headers: {
       'User-Agent': 'Lotta-Chat App',
       tenant: `id:${tenant.id}`,
@@ -33,23 +30,53 @@ export const createApolloClient = async (
   });
 };
 
-const createPersistentCache = async () => {
-  const cache = new InMemoryCache();
-  return persistCache({
-    cache,
-    storage: new AsyncStorageWrapper(AsyncStorage),
-    trigger: 'background',
-    maxSize: 10485760, // 10MB
-  }).then(() => cache);
+const usePotentiallyPersistentCache = (
+  sessionOrTenant?: Session | TenantLight | null
+) => {
+  const [cache, setCache] = useState<InMemoryCache | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!sessionOrTenant) {
+      return setIsLoaded(true);
+    }
+
+    const cache = new InMemoryCache();
+
+    if (!('auth' in sessionOrTenant)) {
+      // For non-session users, no need for persistence
+      setCache(cache);
+      return setIsLoaded(true);
+    }
+
+    persistCache({
+      cache,
+      storage: new AsyncStorageWrapper(AsyncStorage),
+      trigger: 'background',
+      maxSize: 10485760, // 10MB
+    }).then(() => {
+      setCache(cache);
+      setIsLoaded(true);
+    });
+  }, [sessionOrTenant]);
+
+  return useMemo(() => ({ cache, isLoaded: isLoaded }), [cache, isLoaded]);
 };
 
-export const useApolloClient = (session?: Session | TenantLight | null) => {
-  const apolloClientPromise = useMemo(() => {
-    if (!session) {
-      return null;
-    }
-    return createApolloClient(session, { cache: createPersistentCache() });
-  }, [session]);
+export const useApolloClient = (
+  sessionOrTenant?: Session | TenantLight | null
+) => {
+  const { cache, isLoaded } = usePotentiallyPersistentCache(sessionOrTenant);
 
-  return use(apolloClientPromise || Promise.resolve(null));
+  return useMemo(() => {
+    if (!sessionOrTenant) {
+      return { client: null, isLoaded: true };
+    }
+
+    if (!isLoaded) {
+      return { client: null, isLoaded };
+    }
+
+    return { client: createApolloClient(sessionOrTenant, { cache }), isLoaded };
+  }, [sessionOrTenant, isLoaded, cache]);
 };

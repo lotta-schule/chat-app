@@ -1,1 +1,1 @@
-export * from './AppContextProviders';
+export * from './AuthenticatedTenantRoot';

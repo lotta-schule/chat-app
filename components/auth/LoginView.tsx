@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, ImageBackground } from 'expo-image';
 import {
   TextInput,
@@ -10,11 +10,12 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useActionSheet } from '@expo/react-native-action-sheet';
-import { useMutation, useQuery } from '@apollo/client';
+import { MutationOptions, OperationVariables } from '@apollo/client';
 import { GET_TENANT_QUERY } from '@/hooks/useTenant';
 import { apiUrl, baseProtocol, baseUrl } from '@/config';
-import { Session } from '@/lib';
-import { graphql } from '@/api/graphql';
+import { Session, TenantLight } from '@/lib';
+import { graphql, VariablesOf } from '@/api/graphql';
+import { createApolloClient } from '@/lib/apollo';
 
 export type LoginViewProps = {
   onLoginSuccess?: (session: Session) => void;
@@ -47,17 +48,37 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
   const [selectedTenant, setSelectedTenant] = useState<TenantLight | null>(
     null
   );
-  const [login] = useMutation(LOGIN_MUTATION);
+  const [theme, setTheme] = useState<any>(null);
+  console.log({ theme });
 
-  const { data: selectedTenantData } = useQuery(GET_TENANT_QUERY, {
-    skip: !selectedTenant,
-    context: {
-      headers: {
-        'User-Agent': 'Lotta-Chat App',
-        tenant: `slug:${selectedTenant?.slug || ''}`,
-      },
-    },
-  });
+  const client = useMemo(
+    () => selectedTenant && createApolloClient(selectedTenant),
+    [selectedTenant]
+  );
+
+  const login = useCallback(
+    (
+      args: Omit<
+        MutationOptions<
+          any,
+          VariablesOf<typeof LOGIN_MUTATION>,
+          OperationVariables
+        >,
+        'mutation'
+      >
+    ) => client?.mutate({ mutation: LOGIN_MUTATION, ...args }),
+    [client]
+  );
+
+  useEffect(() => {
+    const thisClient = client;
+    thisClient?.query({ query: GET_TENANT_QUERY }).then((response) => {
+      const theme = response.data?.tenant?.configuration?.customTheme;
+      if (thisClient === client && theme) {
+        setTheme(theme);
+      }
+    });
+  }, [client]);
 
   const searchTenants = useCallback(() => {
     setIsLoading(true);
@@ -123,7 +144,7 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
         if (!selectedIndex) {
           return;
         }
-        const selection = tenants.at(selectedIndex);
+        const selection = tenants.at(selectedIndex - 1);
         if (selection) {
           setSelectedTenant(selection);
         }
@@ -148,16 +169,17 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
         },
       },
     })
-      .then((response) => {
+      ?.then((response) => {
         if (response.data?.login) {
           const auth = response.data.login as Required<
             typeof response.data.login
-          >;
+          > as any; // TODO: Fix types
           // Handle successful login, e.g., store tokens, navigate to the main app
           onLoginSuccess?.({
             tenant: selectedTenant,
             auth,
           });
+          console.log({ auth, selectedTenant });
         } else {
           alert(
             'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.'
@@ -173,104 +195,114 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
       });
   }, [login, onLoginSuccess, password, selectedTenant, username]);
 
-  const theme = selectedTenantData?.tenant?.configuration?.customTheme;
-
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {
-          backgroundColor: (theme as any)?.backgroundColor?.replace(/^#/, '#'),
-        },
-      ]}
-    >
-      <ImageBackground source={tenantBg} />
-      <Image
-        style={styles.logo}
-        placeholder={require('@/assets/images/logo_s.png')}
-        source={tenantLogo || undefined}
-        contentFit="contain"
-        transition={1000}
-      />
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={{ display: 'flex', flexGrow: 1 }}
+    <View style={styles.wrapper}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: (theme as any)?.backgroundColor?.replace(
+              /^#/,
+              '#'
+            ),
+          },
+        ]}
       >
-        <View style={styles.formSection}>
-          <View style={styles.inputLabelWrapper}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <TextInput
-              placeholder="Username"
-              style={styles.inputField}
-              onChangeText={(newUsername) => {
-                setUsername(newUsername);
-                if (newUsername !== username) {
-                  setPassword('');
-                  setTenants([]);
-                  setSelectedTenant(null);
-                }
-              }}
-              defaultValue={username}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              onSubmitEditing={() => {
-                if (username && !isLoading) {
-                  searchTenants();
-                }
-              }}
-              onBlur={() => {
-                if (username && !isLoading) {
-                  searchTenants();
-                }
-              }}
-            />
-          </View>
-          {tenants.length && tenants.length > 1 ? (
-            <Button
-              title={`${selectedTenant?.title || 'Lotta wählen'}`}
-              onPress={onPressTenant}
-              disabled={isLoading}
-              accessibilityState={{ disabled: isLoading }}
-            />
-          ) : undefined}
-          {selectedTenant && (
+        <ImageBackground source={tenantBg} />
+        <Image
+          style={styles.logo}
+          placeholder={require('@/assets/images/logo_s.png')}
+          source={tenantLogo || undefined}
+          contentFit="contain"
+          transition={1000}
+        />
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={{ display: 'flex', flexGrow: 1 }}
+        >
+          <View style={styles.formSection}>
             <View style={styles.inputLabelWrapper}>
-              <Text style={styles.inputLabel}>Passwort</Text>
+              <Text style={styles.inputLabel}>Email</Text>
               <TextInput
-                autoFocus
+                placeholder="Username"
                 style={styles.inputField}
-                placeholder="Passwort"
-                secureTextEntry
-                onChangeText={setPassword}
-                defaultValue={password}
+                onChangeText={(newUsername) => {
+                  setUsername(newUsername);
+                  if (newUsername !== username) {
+                    setPassword('');
+                    setTenants([]);
+                    setSelectedTenant(null);
+                  }
+                }}
+                defaultValue={username}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
                 onSubmitEditing={() => {
-                  if (username && password && !isLoading) {
-                    loginWithPW();
+                  if (username && !isLoading) {
+                    searchTenants();
+                  }
+                }}
+                onBlur={() => {
+                  if (username && !isLoading) {
+                    searchTenants();
                   }
                 }}
               />
             </View>
-          )}
-        </View>
-        <View style={styles.submitSection}>
-          <Button
-            title="weiter"
-            onPress={selectedTenant ? loginWithPW : searchTenants}
-            disabled={!username}
-            accessibilityState={{ disabled: isLoading }}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            {tenants.length && tenants.length > 1 ? (
+              <Button
+                title={`${selectedTenant?.title || 'Lotta wählen'}`}
+                onPress={onPressTenant}
+                disabled={isLoading}
+                accessibilityState={{ disabled: isLoading }}
+              />
+            ) : undefined}
+            {selectedTenant && (
+              <View style={styles.inputLabelWrapper}>
+                <Text style={styles.inputLabel}>Passwort</Text>
+                <TextInput
+                  autoFocus
+                  style={styles.inputField}
+                  placeholder="Passwort"
+                  secureTextEntry
+                  onChangeText={setPassword}
+                  defaultValue={password}
+                  onSubmitEditing={() => {
+                    if (username && password && !isLoading) {
+                      loginWithPW();
+                    }
+                  }}
+                />
+              </View>
+            )}
+          </View>
+          <View style={styles.submitSection}>
+            <Button
+              title="weiter"
+              onPress={selectedTenant ? loginWithPW : searchTenants}
+              disabled={!username}
+              accessibilityState={{ disabled: isLoading }}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 });
 LoginView.displayName = 'LoginView';
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    maxWidth: 600,
+    maxHeight: 900,
+  },
   container: {
     flex: 1,
-    padding: 20,
   },
   logo: {
     width: '80%',
@@ -284,17 +316,18 @@ const styles = StyleSheet.create({
   inputField: {
     flexGrow: 1,
     flexShrink: 1,
+    minWidth: 150,
   },
   inputLabelWrapper: {
     display: 'flex',
     flexDirection: 'row',
     width: '100%',
     marginBottom: 5,
-    marginInline: 10,
   },
   inputLabel: {
     flexShrink: 0,
-    width: '30%',
+    width: '40%',
+    marginInlineStart: 20,
     minWidth: 100,
   },
   formSection: {

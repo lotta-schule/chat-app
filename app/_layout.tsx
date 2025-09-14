@@ -1,28 +1,17 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import { GlobalAppContextProviders, SessionContextProvider } from '@/context';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppContextProviders } from '@/components/layout';
-import { LoginView } from '@/components/auth/LoginView';
-import { SessionContext } from '@/context/SessionContext';
+import { AuthenticatedTenantRoot } from '@/components/layout';
+import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 
 import 'react-native-reanimated';
 
-export const MainLayout = () => {
-  const { currentSession, addSession } = React.use(SessionContext);
-
-  if (!currentSession) {
-    // If no tenant is selected, redirect to the login view.
-    return <LoginView onLoginSuccess={addSession} />;
-  }
-
-  return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
-  );
-};
+if (__DEV__) {
+  // Adds messages only in a dev environment
+  loadDevMessages();
+  loadErrorMessages();
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -35,9 +24,13 @@ export default function RootLayout() {
   }
 
   return (
-    <AppContextProviders>
-      <MainLayout />
-      <StatusBar style="auto" />
-    </AppContextProviders>
+    <GlobalAppContextProviders>
+      <Suspense fallback={null}>
+        <SessionContextProvider>
+          <AuthenticatedTenantRoot />
+          <StatusBar style="auto" />
+        </SessionContextProvider>
+      </Suspense>
+    </GlobalAppContextProviders>
   );
 }

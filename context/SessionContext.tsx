@@ -1,9 +1,12 @@
 import {
+  ContextType,
   createContext,
   PropsWithChildren,
   use,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { getStoredSessions, Session, storeSessions } from '@/lib/auth';
@@ -21,18 +24,23 @@ export const SessionContext = createContext<{
 });
 
 export const SessionContextProvider = ({ children }: PropsWithChildren) => {
-  const storedSessions = use(getStoredSessions());
-  const [sessions, setSessions] = useState(storedSessions);
+  const [sessions, setSessions] = useState<Session[] | null>(null);
   const [currentTenantId, setCurrentTenantId] = useState<number>(0);
+
+  const sessionsRef = useRef(sessions);
 
   const currentSession = useMemo(
     () =>
-      sessions.find((session) => session.tenant.id === currentTenantId) || null,
+      sessions?.find((session) => session.tenant.id === currentTenantId) ||
+      null,
     [sessions, currentTenantId]
   );
 
   const addSession = useCallback((session: Session) => {
     setSessions((prevSessions) => {
+      if (!prevSessions) {
+        return [session];
+      }
       const existingIndex = prevSessions.findIndex(
         (s) => s.tenant.id === session.tenant.id
       );
@@ -47,6 +55,17 @@ export const SessionContextProvider = ({ children }: PropsWithChildren) => {
     setCurrentTenantId(session.tenant.id);
   }, []);
 
+  useEffect(() => {
+    getStoredSessions().then((storedSessions) => {
+      if (sessionsRef.current?.length) {
+        // Someone may have logged in very very fast???
+        setSessions([...sessionsRef.current, ...storedSessions]);
+        return;
+      }
+      setSessions(storedSessions);
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       sessions,
@@ -57,8 +76,17 @@ export const SessionContextProvider = ({ children }: PropsWithChildren) => {
     [sessions, currentSession, currentTenantId, addSession]
   );
 
+  if (value.sessions === null) {
+    // still loading
+    return null;
+  }
+
   return (
-    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+    <SessionContext.Provider
+      value={value as ContextType<typeof SessionContext>}
+    >
+      {children}
+    </SessionContext.Provider>
   );
 };
 

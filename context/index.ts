@@ -1,2 +1,2 @@
+export * from './GlobalAppContextProviders';
 export * from './SessionContext';
-export * from './TenantsContext';
