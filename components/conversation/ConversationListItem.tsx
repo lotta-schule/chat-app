@@ -21,18 +21,15 @@ export const ConversationListItem = memo(
         conversation as any,
         currentUser as any
       ).at(0) || (null as typeof currentUser | null);
-    console.log(otherUser);
     return (
       <TouchableHighlight onPress={onPress} underlayColor="#ddd">
-        <View style={{ display: 'flex', flexDirection: 'row' }}>
-          <View style={{ flex: 0, width: 50 }}>
-            <Image
-              style={{ width: 50, height: 50, borderRadius: '50%' }}
-              source={otherUser?.avatarImageFile?.formats?.find((f) => f.url)}
-              contentFit="cover"
-            />
-          </View>
-          <View style={{ flex: 1, padding: 10 }}>
+        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 12 }}>
+          <Image
+            style={{ width: 36, height: 36, borderRadius: 18, marginRight: 12 }}
+            source={otherUser?.avatarImageFile?.formats?.find((f) => f.url)?.url}
+            contentFit="cover"
+          />
+          <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
               <Text style={{ fontWeight: 'bold' }}>
                 {ConversationHelper.getTitle(conversation, currentUser)}
