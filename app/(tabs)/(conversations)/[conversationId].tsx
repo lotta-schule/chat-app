@@ -2,8 +2,11 @@ import { graphql } from '@/api/graphql';
 import { MessageListItem } from '@/components/conversation/MessageListItem';
 import { MessageInputView } from '@/components/message-input/MessageInputView';
 import { useQuery } from '@apollo/client';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { FlatList, SafeAreaView } from 'react-native';
+import { useLayoutEffect } from 'react';
+import { ConversationHelper } from '@/lib/ConversationHelper';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export const GET_CONVERSATION_QUERY = graphql(`
   query GetConversation($id: ID!) {
@@ -69,11 +72,20 @@ export const GET_CONVERSATION_QUERY = graphql(`
 
 export default function ConversationScreen() {
   const { conversationId } = useLocalSearchParams();
+  const navigation = useNavigation();
+  const currentUser = useCurrentUser();
   const { data } = useQuery(GET_CONVERSATION_QUERY, {
     variables: {
       id: conversationId as string,
     },
   });
+
+  useLayoutEffect(() => {
+    if (data?.conversation) {
+      const title = ConversationHelper.getTitle(data.conversation as any, currentUser as any);
+      navigation.setOptions({ title });
+    }
+  }, [data?.conversation, navigation, currentUser]);
 
   return (
     <SafeAreaView
