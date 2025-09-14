@@ -1,5 +1,5 @@
 import { ResultOf } from '@/api/graphql';
-import { GET_CONVERSATIONS_QUERY } from '@/app/(tabs)/index';
+import { GET_CONVERSATIONS_QUERY } from '@/app/(tabs)/(conversations)/index';
 
 export const ConversationHelper = {
   getOtherUsers<T extends { id: string | null } | null>(

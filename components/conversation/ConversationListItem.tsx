@@ -35,7 +35,7 @@ export const ConversationListItem = memo(
           <View style={{ flex: 1, padding: 10 }}>
             <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
               <Text style={{ fontWeight: 'bold' }}>
-                {ConversationHelper.getTitle(conversation)}
+                {ConversationHelper.getTitle(conversation, currentUser)}
               </Text>
               <Text style={{ fontSize: 12 }}>{conversation?.updatedAt}</Text>
             </View>
