@@ -16,13 +16,6 @@ export interface SettingsItemProps {
   isLast?: boolean;
 }
 
-export interface UserProfileItemProps {
-  userName: string;
-  tenantName: string;
-  avatarUrl?: string;
-  onPress?: () => void;
-  isLast?: boolean;
-}
 
 export const SettingsSection: React.FC<SettingsSectionProps> = ({ title, children }) => {
   const childrenArray = React.Children.toArray(children);
@@ -79,35 +72,6 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
   );
 };
 
-export const UserProfileItem: React.FC<UserProfileItemProps> = ({
-  userName,
-  tenantName,
-  avatarUrl,
-  onPress,
-  isLast = false
-}) => {
-  const Component = onPress ? TouchableOpacity : View;
-
-  return (
-    <Component
-      style={[styles.item, isLast && styles.itemLast]}
-      onPress={onPress}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
-      <View style={styles.userProfileContent}>
-        <Image
-          style={styles.avatar}
-          source={avatarUrl ? { uri: avatarUrl } : undefined}
-          contentFit="cover"
-        />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{userName}</Text>
-          <Text style={styles.tenantName}>{tenantName}</Text>
-        </View>
-      </View>
-    </Component>
-  );
-};
 
 const styles = StyleSheet.create({
   section: {
@@ -159,32 +123,5 @@ const styles = StyleSheet.create({
   },
   chevron: {
     marginLeft: 8,
-  },
-  userProfileContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 60,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#dee2e6',
-    marginRight: 12,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#000000',
-    marginBottom: 2,
-  },
-  tenantName: {
-    fontSize: 15,
-    color: '#8E8E93',
   },
 });
