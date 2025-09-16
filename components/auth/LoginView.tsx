@@ -9,6 +9,8 @@ import {
   Text,
   SafeAreaView,
 } from 'react-native';
+
+const logoPlaceholder = require('@/assets/images/logo_s.png');
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import { MutationOptions, OperationVariables } from '@apollo/client';
 import { GET_TENANT_QUERY } from '@/hooks/useTenant';
@@ -115,16 +117,16 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
   const tenantLogo = React.useMemo(() => {
     if (selectedTenant && selectedTenant.logoImageFileId) {
       const path = `data/storage/f/${selectedTenant.logoImageFileId}/logo_600`;
-      return `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}`;
+      return { uri: `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}` };
     }
-    return null;
+    return undefined;
   }, [selectedTenant]);
   const tenantBg = React.useMemo(() => {
     if (selectedTenant && selectedTenant.backgroundImageFileId) {
       const path = `data/storage/f/${selectedTenant.backgroundImageFileId}/logo_600`;
-      return `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}`;
+      return { uri: `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}` };
     }
-    return null;
+    return undefined;
   }, [selectedTenant]);
 
   const { showActionSheetWithOptions } = useActionSheet();
@@ -211,8 +213,8 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
         <ImageBackground source={tenantBg} />
         <Image
           style={styles.logo}
-          placeholder={require('@/assets/images/logo_s.png')}
-          source={tenantLogo || undefined}
+          source={tenantLogo}
+          placeholder={logoPlaceholder}
           contentFit="contain"
           transition={1000}
         />
@@ -305,10 +307,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    width: '80%',
-    maxWidth: 450,
-    height: '20%',
-    maxHeight: 307,
+    width: 300,
+    height: 200,
     alignSelf: 'center',
     marginBlockStart: '25%',
     marginBlockEnd: 40,
