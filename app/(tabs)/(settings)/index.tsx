@@ -1,17 +1,22 @@
-import React, { useCallback, useMemo } from 'react';
-import { ScrollView, StyleSheet, Alert } from 'react-native';
+import React, { useCallback, useMemo, useState, useContext } from 'react';
+import { ScrollView, StyleSheet, Alert, Modal } from 'react-native';
 import { openBrowserAsync } from 'expo-web-browser';
-import { SettingsSection, SettingsItem, UserProfileItem } from '@/components/ui/SettingsSection';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useCurrentSession } from '@/context/SessionContext';
+import {
+  SettingsSection,
+  SettingsItem,
+} from '@/components/ui/SettingsSection';
+import { UserProfileItem } from '@/components/ui/UserProfileItem';
+import { useCurrentSession, SessionContext } from '@/context/SessionContext';
 import { apiUrl } from '@/config';
+import { LoginView } from '@/components/auth/LoginView';
 
 const APP_VERSION = '1.0.0'; // From app.json
 const GITHUB_URL = 'https://github.com/lotta-schule/chat-app';
 
 export default function SettingsScreen() {
-  const currentUser = useCurrentUser();
   const currentSession = useCurrentSession();
+  const { sessions, addSession, switchToSession } = useContext(SessionContext);
+  const [isShowLoginModal, setIsShowLoginModal] = useState(false);
 
   const apiHost = useMemo(() => {
     try {
@@ -20,40 +25,68 @@ export default function SettingsScreen() {
       return apiUrl; // Fallback to original if URL parsing fails
     }
   }, []);
-
-  const userAvatarUrl = useMemo(() => {
-    return currentUser?.avatarImageFile?.formats?.find(f => f.url)?.url;
-  }, [currentUser]);
-
-  const userName = currentUser?.nickname || currentUser?.name || 'Unbekannter Benutzer';
-  const tenantName = currentSession?.tenant?.slug || 'Unbekannter Tenant';
   const handleSendFeedback = useCallback(() => {
-    Alert.alert(
-      'Send Feedback',
-      'This feature will be implemented soon.',
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Send Feedback', 'This feature will be implemented soon.', [
+      { text: 'OK' },
+    ]);
   }, []);
 
   const handleShowSourceCode = useCallback(async () => {
     try {
       await openBrowserAsync(GITHUB_URL);
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        'Could not open the GitHub repository.',
-        [{ text: 'OK' }]
-      );
+    } catch (error: any) {
+      Alert.alert('Error', 'Could not open the GitHub repository.', [
+        { text: 'OK' },
+      ]);
     }
   }, []);
 
+  const handleAddAccount = useCallback(() => {
+    setIsShowLoginModal(true);
+  }, []);
+
+  const onCloseModal = useCallback(
+    (session?: any) => {
+      if (session) {
+        addSession(session);
+      }
+      setIsShowLoginModal(false);
+    },
+    [addSession]
+  );
+
+  const handleSessionSwitch = useCallback(
+    (tenantId: number) => {
+      if (tenantId !== currentSession?.tenant.id) {
+        switchToSession(tenantId);
+      }
+    },
+    [currentSession?.tenant.id, switchToSession]
+  );
+
   return (
-    <ScrollView style={styles.container} contentInsetAdjustmentBehavior="automatic">
+    <ScrollView
+      style={styles.container}
+      contentInsetAdjustmentBehavior="automatic"
+    >
       <SettingsSection title="angemeldet als">
-        <UserProfileItem
-          userName={userName}
-          tenantName={tenantName}
-          avatarUrl={userAvatarUrl}
+        {sessions?.map((session) => {
+          const isCurrentSession =
+            session.tenant.id === currentSession?.tenant.id;
+
+          return (
+            <UserProfileItem
+              key={session.tenant.id}
+              session={session}
+              onPress={() => handleSessionSwitch(session.tenant.id)}
+              isCurrent={isCurrentSession}
+            />
+          );
+        })}
+        <SettingsItem
+          title="Benutzerkonto hinzufügen"
+          onPress={handleAddAccount}
+          showChevron
         />
       </SettingsSection>
 
@@ -71,6 +104,15 @@ export default function SettingsScreen() {
           showChevron
         />
       </SettingsSection>
+
+      <Modal
+        visible={isShowLoginModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => onCloseModal()}
+      >
+        <LoginView onLoginSuccess={onCloseModal} />
+      </Modal>
     </ScrollView>
   );
 }
