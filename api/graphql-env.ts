@@ -5996,8 +5996,11 @@ const introspection = {
             "type": {
               "kind": "LIST",
               "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
               }
             }
           },

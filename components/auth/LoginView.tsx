@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 
-const logoPlaceholder = require('@/assets/images/logo_s.png');
+import logoPlaceholder from '@/assets/images/logo_s.png';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import { MutationOptions, OperationVariables } from '@apollo/client';
 import { GET_TENANT_QUERY } from '@/hooks/useTenant';
@@ -117,14 +117,18 @@ export const LoginView = React.memo(({ onLoginSuccess }: LoginViewProps) => {
   const tenantLogo = React.useMemo(() => {
     if (selectedTenant && selectedTenant.logoImageFileId) {
       const path = `data/storage/f/${selectedTenant.logoImageFileId}/logo_600`;
-      return { uri: `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}` };
+      return {
+        uri: `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}`,
+      };
     }
     return undefined;
   }, [selectedTenant]);
   const tenantBg = React.useMemo(() => {
     if (selectedTenant && selectedTenant.backgroundImageFileId) {
       const path = `data/storage/f/${selectedTenant.backgroundImageFileId}/logo_600`;
-      return { uri: `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}` };
+      return {
+        uri: `${baseProtocol}://${selectedTenant.slug}.${baseUrl}/${path}`,
+      };
     }
     return undefined;
   }, [selectedTenant]);
