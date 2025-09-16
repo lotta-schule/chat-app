@@ -8,7 +8,6 @@ import { ApolloProvider } from '@apollo/client';
 export const AuthenticatedTenantRoot = memo(() => {
   const { currentSession, addSession } = use(SessionContext);
   const { client, isLoaded } = useApolloClient(currentSession);
-  console.log({ client, isLoaded, currentSession });
 
   if (!isLoaded) {
     // If the Apollo client is not ready, we can return null or a loading state.

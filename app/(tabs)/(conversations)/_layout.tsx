@@ -4,7 +4,15 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { UserToolbar } from '@/components/ui/UserToolbar';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
-const ExtendedHeader = ({ title, navigation, back }: { title: string; navigation: any; back?: any }) => (
+const ExtendedHeader = ({
+  title,
+  navigation,
+  back,
+}: {
+  title: string;
+  navigation: any;
+  back?: any;
+}) => (
   <View style={styles.extendedHeaderContainer}>
     <UserToolbar />
     <View style={styles.defaultHeaderContainer}>
@@ -37,14 +45,8 @@ export default function ConversationsLayout() {
         ),
       }}
     >
-      <Stack.Screen
-        name="index"
-        options={{ title: 'Nachrichten' }}
-      />
-      <Stack.Screen
-        name="[conversationId]"
-        options={{ title: 'Chat' }}
-      />
+      <Stack.Screen name="index" options={{ title: 'Nachrichten' }} />
+      <Stack.Screen name="[conversationId]" options={{ title: 'Chat' }} />
     </Stack>
   );
 }

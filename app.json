@@ -13,14 +13,16 @@
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "bundleIdentifier": "com.anonymous.lotta-chat"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.lottachat"
     },
     "web": {
       "bundler": "metro",
@@ -41,10 +43,14 @@
       [
         "expo-asset",
         {
-          "assets": ["./assets/images/logo.png"]
+          "assets": [
+            "./assets/images/logo.png"
+          ]
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

@@ -7,8 +7,8 @@ import {
   Button,
   KeyboardAvoidingView,
   Text,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import logoPlaceholder from '@/assets/images/logo_s.png';
 import { useActionSheet } from '@expo/react-native-action-sheet';

@@ -23,10 +23,19 @@ export const ConversationListItem = memo(
       ).at(0) || (null as typeof currentUser | null);
     return (
       <TouchableHighlight onPress={onPress} underlayColor="#ddd">
-        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 12 }}>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+          }}
+        >
           <Image
             style={{ width: 36, height: 36, borderRadius: 18, marginRight: 12 }}
-            source={otherUser?.avatarImageFile?.formats?.find((f) => f.url)?.url}
+            source={
+              otherUser?.avatarImageFile?.formats?.find((f) => f.url)?.url
+            }
             contentFit="cover"
           />
           <View style={{ flex: 1 }}>
@@ -38,7 +47,7 @@ export const ConversationListItem = memo(
             </View>
           </View>
           <View style={{ flex: 0, width: 25 }}>
-            {conversation?.unreadMessages && (
+            {!!conversation?.unreadMessages && (
               <View style={{ width: 25, height: 25, borderRadius: '50%' }}>
                 <Text>{conversation?.unreadMessages}</Text>
               </View>
