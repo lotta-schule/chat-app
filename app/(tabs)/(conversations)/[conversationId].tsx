@@ -3,8 +3,7 @@ import { MessageListItem } from '@/components/conversation/MessageListItem';
 import { MessageInputView } from '@/components/message-input/MessageInputView';
 import { useQuery } from '@apollo/client';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, View } from 'react-native';
 import { useLayoutEffect } from 'react';
 import { ConversationHelper } from '@/lib/ConversationHelper';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -92,7 +91,7 @@ export default function ConversationScreen() {
   }, [data?.conversation, navigation, currentUser]);
 
   return (
-    <SafeAreaView
+    <View
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -110,6 +109,6 @@ export default function ConversationScreen() {
         )}
       />
       <MessageInputView onSend={async (msg) => alert(msg)} />
-    </SafeAreaView>
+    </View>
   );
 }
